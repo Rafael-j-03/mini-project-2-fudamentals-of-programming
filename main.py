@@ -2,34 +2,34 @@ import pygame
 import math
 import random
 
-#Setting the window
+# Setting the window
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
 
-#Caption
+# Caption
 pygame.display.set_caption("Comets")
 
-#Window stuff
+# Window stuff
 screen_center_x = 800/2
 screen_center_y = 600/2
 screen_width = screen.get_width()
 screen_height = screen.get_height()
 
-#Assets
+# Assets
 ship = pygame.image.load('images/ship1.png')
 bigAsteroid = pygame.image.load('images/bigAsteroid.png')
 mediumAsteroid = pygame.image.load('images/mediumAsteroid.png')
 smallAsteroid = pygame.image.load('images/smallAsteroid.png')
 
-#Colors
+# Colors
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
 
-#Setting clock
+# Setting clock
 clock = pygame.time.Clock()
 
-#Player Class
+# Player Class
 class Player(object):
     def __init__(self):
         self.asset = ship
@@ -47,6 +47,7 @@ class Player(object):
         self.cosine = math.cos(math.radians(self.angle + 90))
         self.sine = math.sin(math.radians(self.angle + 90))
         self.head = (self.x + self.cosine * self.w//2, self.y - self.sine * self.h//2)
+        self.score = 0
     
     def draw(self, screen):
         screen.blit(self.rotatedScreen, self.rotatedRect)
@@ -88,7 +89,7 @@ class Player(object):
         # Reset the player object to its original state
         self.__init__()
 
-#Bullet class
+# Bullet class
 class Bullet(object):
     def __init__(self):
         self.point = player.head
@@ -120,7 +121,7 @@ class Bullet(object):
     def draw(self, screen):
         pygame.draw.rect(screen, WHITE, [self.x ,self.y , self.w, self.h])
         
-#Class Asteroid
+# Class Asteroid
 class Asteroid(object):
     def __init__(self, rank):
         self.rank = rank
@@ -146,7 +147,7 @@ class Asteroid(object):
             self.ydir = 1
         else:
             self.ydir = -1
-        #Random Speed for each asteroid
+        # Random Speed for each asteroid
         self.xv = self.xdir * random.randrange(1,3)
         self.yv = self.ydir * random.randrange(1,3)
         
@@ -166,13 +167,13 @@ class Asteroid(object):
     def draw(self, screen):
         screen.blit(self.asset, (self.x, self.y))
 
-#Calling essential stuff
+# Calling essential stuff
 player = Player()
 playerBullets = []
 bullet = Bullet()
 asteroids = []
 
-#Start Screen
+# Start Screen
 def startScreen():
     # Create font objects
     font = pygame.font.Font(None, 50)
@@ -229,27 +230,29 @@ def startScreen():
         
         pygame.display.flip()
         
-#Game Screen
+# Game Screen
 def gameScreen():
-    #Check if player is alive
+    # Check if player is alive
     alive = True
-    #Starting with 2 big Asteroids
+    # Starting with 2 big Asteroids
     asteroids = [Asteroid(3),Asteroid(3)]
-    
     # Set the time interval between key press events (in milliseconds)
     time_interval = 1000
-    
     # Set the time of the last key press event to 0
     last_key_time = 0
-    
     # Setting a count
     count = 0
+    # Setting the score font
+    score_font = pygame.font.Font(None, 30)
 
     while alive:
+        # Updating the score
+        score_text = score_font.render("Score: " + str(player.score), 1, WHITE)
+        # Set FPS
         clock.tick(60)
         # Clear the screen
         screen.fill(BLACK)
-    # Handle events
+        # Handle events
         if alive:
             # Player Update
             player.update()
@@ -263,11 +266,12 @@ def gameScreen():
                     if (player.y >= a.y and player.y <= a.y + a.h) or (player.y + player.h >= a.y and player.y + player.h <= a.y + a.h):
                         alive = False
                 
-                #Bullet Collission
+                # Bullet Collission
                 for b in playerBullets:
                     if (b.x >= a.x and b.x <= a.x + a.w) or (b.x + b.w >= a.x and b.x + b.w <= a.x + a.w):
                         if (b.y >= a.y and b.y <= a.y + a.h) or (b.y + b.h >= a.y and b.y + b.h <= a.y + a.h):
                             if a.rank == 3:
+                                player.score += 10
                                 new_asteroid1 = Asteroid(2)
                                 new_asteroid2 = Asteroid(2)
                                 new_asteroid3 = Asteroid(2)
@@ -281,6 +285,7 @@ def gameScreen():
                                 asteroids.append(new_asteroid2)
                                 asteroids.append(new_asteroid3)
                             elif a.rank == 2:
+                                player.score += 20
                                 new_asteroid1 = Asteroid(1)
                                 new_asteroid2 = Asteroid(1)
                                 new_asteroid3 = Asteroid(1)
@@ -301,6 +306,8 @@ def gameScreen():
                                 asteroids.append(new_asteroid3)
                                 asteroids.append(new_asteroid4)
                                 asteroids.append(new_asteroid5)
+                            else:
+                                player.score += 30
                             asteroids.pop(asteroids.index(a))
                             playerBullets.pop(playerBullets.index(b))
                             
@@ -342,13 +349,32 @@ def gameScreen():
         #Asteroids drawing
         for a in asteroids:
             a.draw(screen)
-        #Update the screen
+        # Shows the score
+        screen.blit(score_text, (screen_width - score_text.get_width() - 25, 25))
+        # Update the screen
         pygame.display.flip()
+
+#Game Over Screen
+def gameOverScreen():
+    # Set the background color to black
+    screen.fill(BLACK)
+    # Display the game over message
+    font = pygame.font.Font(None, 120)
+    text = font.render("GAME OVER", True, WHITE)
+    text_rect = text.get_rect()
+    text_rect.centerx = screen_center_x
+    text_rect.centery = screen_center_y
+    screen.blit(text, text_rect)
+    # Update the display
+    pygame.display.update()
+    # Wait for 3 seconds
+    pygame.time.delay(3000)
                     
-#Game main Loop
+# Game main Loop
 while True:
     startScreen()
     gameScreen()
+    gameOverScreen()
     # Reset the game variables and objects
     player.reset()
     playerBullets = []
