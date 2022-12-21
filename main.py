@@ -26,11 +26,11 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
 
+clear_image = pygame.Surface((screen_width, screen_height))
+clear_image.fill(BLACK)
+
 #Setting clock
 clock = pygame.time.Clock()
-
-#Check if player is alive
-alive = True
 
 #Player Class
 class Player(object):
@@ -86,6 +86,10 @@ class Player(object):
             self.y = screen_height
         elif self.y > screen_height + 25:
             self.y = 0
+    
+    def reset(self):
+        # Reset the player object to its original state
+        self.__init__()
 
 #Bullet class
 class Bullet(object):
@@ -125,12 +129,16 @@ class Asteroid(object):
         self.rank = rank
         if self.rank == 1:
             self.asset = smallAsteroid
+            self.w = self.asset.get_width()
+            self.h = self.asset.get_height()
         if self.rank == 2:
             self.asset = mediumAsteroid
+            self.w = self.asset.get_width()
+            self.h = self.asset.get_height()
         if self.rank == 3:
             self.asset = bigAsteroid
-        self.w = 50 * rank
-        self.h = 50 * rank
+            self.w = self.asset.get_width()
+            self.h = self.asset.get_height()
         self.sPoint = random.choice([(random.randrange(0, screen_width - self.w), random.choice([-1 * self.h - 5, screen_height + 5])), (random.choice([-1 * self.w - 5, screen_width + 5]), random.randrange(0, screen_height - self.h))])
         self.x, self.y = self.sPoint
         if self.x < screen_width//2:
@@ -188,7 +196,7 @@ def startScreen():
     selected_button = "start"  # Start with the start button selected
     while True:
         # Draw the start and exit buttons on the screen
-        screen.fill((0, 0, 0))
+        screen.fill(BLACK)
         screen.blit(title_text, title_rect)
         if selected_button == "start":
             screen.blit(font.render("START", True, RED), start_rect)
@@ -226,9 +234,10 @@ def startScreen():
         
 #Game Screen
 def gameScreen():
+    #Check if player is alive
+    alive = True
     #Starting with 2 big Asteroids
-    asteroids.append(Asteroid(3))
-    asteroids.append(Asteroid(3))
+    asteroids = [Asteroid(3),Asteroid(3)]
     
     # Set the time interval between key press events (in milliseconds)
     time_interval = 1000
@@ -239,27 +248,76 @@ def gameScreen():
     # Setting a count
     count = 0
 
-    while True:
+    while alive:
         clock.tick(60)
-        count += 1
+        # Clear the screen
+        screen.fill(BLACK)
     # Handle events
         if alive:
-            activeBigAsteroids = asteroids.count(Asteroid(3))
-            activeMediumAsteroids = asteroids.count(Asteroid(2))
-            activeSmallAsteroids = asteroids.count(Asteroid(1))
-            # Check if are too much asteroids in the screen to spawn more after
-            if (activeBigAsteroids > 2) or (activeMediumAsteroids > 6) or (activeSmallAsteroids > 15):
-                if count % 150 == 0:
-                    asteroids.append(Asteroid(3))
-                
+            # Player Update
             player.update()
-            
+            # Bullets Update
             for b in playerBullets:
                 b.update()
-                
+            # Asteroids update
             for a in asteroids:
                 a.update()
+                if (player.x >= a.x and player.x <= a.x + a.w) or (player.x + player.w >= a.x and player.x + player.w <= a.x + a.w):
+                    if (player.y >= a.y and player.y <= a.y + a.h) or (player.y + player.h >= a.y and player.y + player.h <= a.y + a.h):
+                        alive = False
+                
+                #Bullet Collission
+                for b in playerBullets:
+                    if (b.x >= a.x and b.x <= a.x + a.w) or (b.x + b.w >= a.x and b.x + b.w <= a.x + a.w):
+                        if (b.y >= a.y and b.y <= a.y + a.h) or (b.y + b.h >= a.y and b.y + b.h <= a.y + a.h):
+                            if a.rank == 3:
+                                new_asteroid1 = Asteroid(2)
+                                new_asteroid2 = Asteroid(2)
+                                new_asteroid3 = Asteroid(2)
+                                new_asteroid1.x = a.x
+                                new_asteroid2.x = a.x
+                                new_asteroid3.x = a.x
+                                new_asteroid1.y = a.y
+                                new_asteroid2.y = a.y
+                                new_asteroid3.y = a.y
+                                asteroids.append(new_asteroid1)
+                                asteroids.append(new_asteroid2)
+                                asteroids.append(new_asteroid3)
+                            elif a.rank == 2:
+                                new_asteroid1 = Asteroid(1)
+                                new_asteroid2 = Asteroid(1)
+                                new_asteroid3 = Asteroid(1)
+                                new_asteroid4 = Asteroid(1)
+                                new_asteroid5 = Asteroid(1)
+                                new_asteroid1.x = a.x
+                                new_asteroid2.x = a.x
+                                new_asteroid3.x = a.x
+                                new_asteroid4.x = a.x
+                                new_asteroid5.x = a.x
+                                new_asteroid1.y = a.y
+                                new_asteroid2.y = a.y
+                                new_asteroid3.y = a.y
+                                new_asteroid4.y = a.y
+                                new_asteroid5.y = a.y
+                                asteroids.append(new_asteroid1)
+                                asteroids.append(new_asteroid2)
+                                asteroids.append(new_asteroid3)
+                                asteroids.append(new_asteroid4)
+                                asteroids.append(new_asteroid5)
+                            asteroids.pop(asteroids.index(a))
+                            playerBullets.pop(playerBullets.index(b))
+                            
+            # Count the number of asteroids from each level using a list comprehension
+            num_bigAsteroids = len([a for a in asteroids if a.rank == 1])
+            num_mediumAsteroids = len([a for a in asteroids if a.rank == 2])
+            num_smallAsteroids = len([a for a in asteroids if a.rank == 3])
+            # Check if are too much asteroids in the screen to spawn more after
+            if (num_smallAsteroids < 2) and (num_mediumAsteroids < 6) and (num_bigAsteroids < 15):
+                count += 1
+                if count % 200 == 0:
+                    asteroids.append(Asteroid(3))
             
+            # Keyboard Inputs
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 player.turnLeft()
@@ -273,32 +331,28 @@ def gameScreen():
                 current_time = pygame.time.get_ticks()
                 if current_time - last_key_time > time_interval:
                     playerBullets.append(Bullet())
-                    last_key_time = current_time
-                
-        
+                    last_key_time = current_time      
+        # If the player wants to close the game
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit() 
-                exit()
-                    
-            
-        screen.fill(BLACK)
+                exit()            
+        # Drawing
         player.draw(screen)
-        
+        #Bullets drawing
         for b in playerBullets:
             b.draw(screen)
-            
+        #Asteroids drawing
         for a in asteroids:
             a.draw(screen)
-        
+        #Update the screen
         pygame.display.flip()
                     
-#Main Loop
+#Game main Loop
 while True:
-    event = pygame.event.wait()
-    if event.type == pygame.QUIT:
-        pygame.quit() 
-        exit()
-    
     startScreen()
     gameScreen()
+    # Reset the game variables and objects
+    player.reset()
+    playerBullets = []
+    asteroids = []
