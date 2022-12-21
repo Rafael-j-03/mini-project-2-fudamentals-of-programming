@@ -26,9 +26,6 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
 
-clear_image = pygame.Surface((screen_width, screen_height))
-clear_image.fill(BLACK)
-
 #Setting clock
 clock = pygame.time.Clock()
 
