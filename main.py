@@ -48,6 +48,10 @@ class Player(object):
         self.sine = math.sin(math.radians(self.angle + 90))
         self.head = (self.x + self.cosine * self.w//2, self.y - self.sine * self.h//2)
         self.score = 0
+        self.initials = ''
+    
+    def get_score(self):
+        return self.score
     
     def draw(self, screen):
         screen.blit(self.rotatedScreen, self.rotatedRect)
@@ -359,7 +363,7 @@ def gameOverScreen():
     # Set the background color to black
     screen.fill(BLACK)
     # Display the game over message
-    font = pygame.font.Font(None, 120)
+    font = pygame.font.Font(None, 170)
     text = font.render("GAME OVER", True, WHITE)
     text_rect = text.get_rect()
     text_rect.centerx = screen_center_x
@@ -367,14 +371,105 @@ def gameOverScreen():
     screen.blit(text, text_rect)
     # Update the display
     pygame.display.update()
-    # Wait for 3 seconds
-    pygame.time.delay(3000)
+    # Wait for 2 seconds
+    pygame.time.delay(2000)
+    
+# Display the leaderboard for 6 seconds
+LEADERBOARD_DISPLAY_TIME = 6000
+
+def write_to_leaderboard(player):
+    # Read the scores from the leaderboard.txt file
+    scores = []
+    with open("leaderboard.txt", "r") as f:
+        for line in f:
+            score, initials = line.strip().split(",")
+            scores.append((int(score), initials))
+    # Sort the scores in descending order by score
+    scores = sorted(scores, key=lambda x: x[0], reverse=True)
+    # Prompt the player to enter their initials if their score is one of the top 10 scores
+    if len(scores) < 10 or player.get_score() > scores[9][0]:
+        initials = input("Enter your initials: ")
+        # Convert the initials to uppercase
+        initials = initials.upper()
+        # Limit the length of the initials to 3 characters
+        if len(initials) == 3:
+            # Write the player's score and initials to the leaderboard.txt file
+            with open("leaderboard.txt", "a") as f:
+                f.write(f"{player.get_score()},{initials}\n")
+        else:
+            print("Error: Initials must be 3 characters long.")
+    # Update the display
+    pygame.display.flip()
+
+def display_scores(scores, screen):
+    # Create a font object
+    font = pygame.font.Font(None, 40)
+    leaderboard_font = pygame.font.Font(None, 50)
+    score_surfaces = []
+    score_rects = []
+    y_offset = 0
+    for score in scores:
+        # Create a surface with the leaderboard text
+        leaderboard_text = leaderboard_font.render("Leaderboard", True, WHITE)
+        # Get the dimensions of the surface
+        leaderboard_rect = leaderboard_text.get_rect()
+        # Set the position of the surface
+        leaderboard_rect.center = (screen_center_x, 50)
+        # Create a surface with the score
+        score_surface = font.render(score, True, WHITE)
+        # Get the dimensions of the surface
+        score_rect = score_surface.get_rect()
+        # Set the position of the surface
+        score_rect.center = (screen_center_x, 100 + y_offset)
+        # Add the surface and rect to the lists
+        score_surfaces.append(score_surface)
+        score_rects.append(score_rect)
+        # Increment the y offset
+        y_offset += 50
+    # Clear the screen
+    screen.fill(BLACK)
+    # Draw the scores surfaces on the screen
+    for score_surface, score_rect in zip(score_surfaces, score_rects):
+        screen.blit(score_surface, score_rect)
+    screen.blit(leaderboard_text, leaderboard_rect)
+    # Update the display
+    pygame.display.flip()
+
+def display_leaderboard(player, screen):
+    scores = []
+    with open("leaderboard.txt", "r") as f:
+        for line in f:
+            score, initials = line.strip().split(",")
+            scores.append((int(score), initials))
+    # Sort the scores in descending order by score
+    scores = sorted(scores, key=lambda x: x[0], reverse=True)
+    # Keep track of the number of scores that have been added to the leaderboard
+    num_scores_added = 0
+    leaderboard_text = []
+    for i, (score, initials) in enumerate(scores[:10]):
+        leaderboard_text.append(f"{initials}: {score}")
+        num_scores_added += 1
+    # Add the player's score and initials to the leaderboard if it is one of the top 10 scores
+    if num_scores_added < 10 and player.get_score() >= scores[num_scores_added][0]:
+        leaderboard_text.append(f"{player.initials}: {player.get_score()}")
+        num_scores_added += 1
+    # Display the scores on the screen
+    display_scores(leaderboard_text, screen)
+    # Wait for the specified amount of time
+    pygame.time.wait(LEADERBOARD_DISPLAY_TIME)
                     
 # Game main Loop
 while True:
+    # Show the start screen
     startScreen()
+    # Show the game screen
     gameScreen()
+    # Show the game over screen
     gameOverScreen()
+    # Write the player's score and initials to the leaderboard
+    write_to_leaderboard(player)
+    # Display the leaderboard
+    display_leaderboard(player, screen)
     # Reset the game variables and objects
     player.reset()
     playerBullets = []
