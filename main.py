@@ -385,16 +385,18 @@ def write_to_leaderboard(player):
     scores = sorted(scores, key=lambda x: x[0], reverse=True)
     # Prompt the player to enter their initials if their score is one of the top 10 scores
     if len(scores) < 10 or player.get_score() > scores[9][0]:
-        initials = input("Enter your initials (3 Characters only): ")
-        # Convert the initials to uppercase
-        initials = initials.upper()
-        # Limit the length of the initials to 3 characters
-        if len(initials) == 3:
-            # Write the player's score and initials to the leaderboard.txt file
-            with open("leaderboard.txt", "a") as f:
-                f.write(f"{player.get_score()},{initials}\n")
-        else:
-            print("Error: Initials must be 3 characters long.")
+        while True:
+            initials = input("\nEnter your initials (3 Characters only): ")
+            # Convert the initials to uppercase
+            initials = initials.upper()
+            # Limit the length of the initials to 3 characters
+            if len(initials) == 3:
+                # Write the player's score and initials to the leaderboard.txt file
+                with open("leaderboard.txt", "a") as f:
+                    f.write(f"{player.get_score()},{initials}\n")
+                break
+            else:
+                print("\nError: Initials must be 3 characters long.")
     # Update the display
     pygame.display.flip()
 
