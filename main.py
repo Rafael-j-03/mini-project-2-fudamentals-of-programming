@@ -373,9 +373,6 @@ def gameOverScreen():
     pygame.display.update()
     # Wait for 2 seconds
     pygame.time.delay(2000)
-    
-# Display the leaderboard for 6 seconds
-LEADERBOARD_DISPLAY_TIME = 6000
 
 def write_to_leaderboard(player):
     # Read the scores from the leaderboard.txt file
@@ -388,7 +385,7 @@ def write_to_leaderboard(player):
     scores = sorted(scores, key=lambda x: x[0], reverse=True)
     # Prompt the player to enter their initials if their score is one of the top 10 scores
     if len(scores) < 10 or player.get_score() > scores[9][0]:
-        initials = input("Enter your initials: ")
+        initials = input("Enter your initials (3 Characters only): ")
         # Convert the initials to uppercase
         initials = initials.upper()
         # Limit the length of the initials to 3 characters
@@ -455,8 +452,10 @@ def display_leaderboard(player, screen):
         num_scores_added += 1
     # Display the scores on the screen
     display_scores(leaderboard_text, screen)
-    # Wait for the specified amount of time
-    pygame.time.wait(LEADERBOARD_DISPLAY_TIME)
+    # Update the display
+    pygame.display.update()
+    # Wait for 6 seconds
+    pygame.time.delay(6000)
                     
 # Game main Loop
 while True:
